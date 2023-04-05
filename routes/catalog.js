@@ -33,3 +33,5 @@ router.post("question/:id", question_controller.question_info_postMethod);
 
 // POST Question details along with all options associcated with it
 router.patch("question/:id", question_controller.question_info_patchMethod);
+
+module.exports = router;
