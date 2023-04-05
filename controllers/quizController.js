@@ -5,8 +5,17 @@ const Option = require("../models/Option");
 const Question = require("../models/Question");
 
 exports.index = (req, res) => {
-  // get list of  all quiz names by that particular user
-  // res.send("NOT IMPLEMENTED: index method");
+  // get a list of all quizes by a particular user
+  resObj = {};
+
+  Quiz.find({}).exec((err, quizArray) => {
+    if (err) {
+      return next(err);
+    }
+    resObj.quizzes = quizArray;
+    resObj.message = "Quiz List for the user";
+    res.status(200).send(resObj);
+  });
 };
 // Done testing required
 exports.quiz_create_postMethod = [
