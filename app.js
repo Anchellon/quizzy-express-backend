@@ -14,12 +14,21 @@ main().catch((err) => console.log(err));
 async function main() {
   await mongoose.connect(mongoDB);
 }
+// Adding routers
+var indexRouter = require("./routes/index");
+// var usersRouter = require("./routes/users");
+const catalogRouter = require("./routes/catalog");
 
 // Middlewares
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+
+// Adding routes
+app.use("/", indexRouter);
+// app.use("/users", usersRouter);
+app.use("/catalog", catalogRouter);
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
