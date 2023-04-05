@@ -2,9 +2,11 @@ const Quiz = require("../models/Quiz");
 const Quiz = require("../models/Question");
 const { body, validationResult } = require("express-validator");
 const Option = require("../models/Option");
+const Question = require("../models/Question");
 
 exports.index = (req, res) => {
-  res.send("NOT IMPLEMENTED: index method");
+  // get list of  all quiz names by that particular user
+  // res.send("NOT IMPLEMENTED: index method");
 };
 // Done testing required
 exports.quiz_create_postMethod = [
@@ -39,14 +41,14 @@ exports.quiz_create_postMethod = [
           if (err) {
             return next(err);
           }
-          // Genre saved. Redirect to genre detail page.
+          // Quiz saved. Redirect to genre detail page.
           res.status(200).send({ msg: "Saved Successfully", name: quiz.name });
         });
       }
     });
   },
 ];
-
+//  Done and Testing required
 exports.quiz_deleteMethod = (req, res, next) => {
   async.parallel(
     {
@@ -55,7 +57,10 @@ exports.quiz_deleteMethod = (req, res, next) => {
         Quiz.findByIdAndDelete(req.params.id).exec();
       },
       deleteMeta: () => {
-        Question.find({ quiz: req.params.id }).exec((qns) => {
+        Question.find({ quiz: req.params.id }).exec((err, qns) => {
+          if (err) {
+            return next(err);
+          }
           qns.forEach((qn) => {
             Option.find({ question: qn.id }).exec((options) => {
               options.forEach((op) => {
@@ -81,10 +86,71 @@ exports.quiz_deleteMethod = (req, res, next) => {
     }
   );
 };
+//  Done Testing Required
+exports.quiz_updateName_putMethod = [
+  // Validate and sanitze the name field.
+  body("name", "Genre name must contain at least 3 characters")
+    .trim()
+    .isLength({ min: 3 })
+    .escape(),
 
-exports.quiz_updateName_putMethod = (req, res) => {
-  res.send("NOT IMPLEMENTED: quiz_updateName_putMethod");
-};
+  // Process request after validation and sanitization.
+  (req, res, next) => {
+    // Extract the validation errors from a request .
+    const errors = validationResult(req);
+
+    // Create a genre object with escaped and trimmed data (and the old id!)
+    var genre = new Quiz({
+      name: req.body.name,
+      _id: req.params.id,
+    });
+
+    if (!errors.isEmpty()) {
+      // There are errors.
+      res.status(422).send({
+        message: "Invalid Input",
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // Update the record.
+      Quiz.findByIdAndUpdate(req.params.id, quiz, {}, function (err, thequiz) {
+        if (err) {
+          return next(err);
+        }
+        // Successful - redirect to genre detail page.
+        res.status(204).send({
+          msg: "Successfully Updated Quiz Name",
+        });
+      });
+    }
+  },
+];
+
 exports.quiz_Info_getMethod = (req, res) => {
-  res.send("NOT IMPLEMENTED: quiz_Info_getMethod");
+  let resObj = {};
+  Quiz.findById(req.params.id).exec((err, quiz) => {
+    if (err) {
+      return next(err);
+    }
+    // For the quiz find all relevant details including all questions and their corresponding
+    resObj.quiz = quiz;
+    Question.find({ quiz: req.params.id }).exec((err, qns) => {
+      if (err) {
+        return next(err);
+      }
+      qns = [];
+      qns.forEach((qn) => {
+        qnObj = {};
+        qnObj.qn = qn;
+        qnObj.options = [];
+        Option.find({ question: qn.id }).exec((options) => {
+          qnObj.options.apply(options);
+        });
+        qns.push(qnObj);
+      });
+      resObj.message = "Quiz Info Retrieved";
+      res.status(200).send(resObj);
+    });
+  });
 };
