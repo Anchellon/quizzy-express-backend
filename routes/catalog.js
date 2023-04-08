@@ -29,7 +29,7 @@ router.delete(
 router.get("question/:id", question_controller.question_info_getMethod);
 
 // POST Question details along with all options associcated with it
-router.post("question/:id", question_controller.question_info_postMethod);
+router.post("question/:id", question_controller.question_create_postMethod);
 
 // POST Question details along with all options associcated with it
 router.patch("question/:id", question_controller.question_info_patchMethod);
