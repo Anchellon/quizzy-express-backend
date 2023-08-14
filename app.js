@@ -8,7 +8,7 @@ const logger = require("morgan");
 // Connection to db via mongoose
 const mongoose = require("mongoose");
 mongoose.set("strictQuery", false);
-const mongoDB = "mongodb://root:rootpassword@localhost:27017/";
+const mongoDB = "mongodb://localhost:27018/quizzy";
 
 main().catch((err) => console.log(err));
 async function main() {
@@ -26,13 +26,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 // Adding routes
-app.use("/", indexRouter);
 // app.use("/users", usersRouter);
 app.use("/catalog", catalogRouter);
 
-app.get("/", (req, res) => {
-  res.send("Hello World!");
-});
+// app.get("/", (req, res) => {
+//   res.send("Hello World!");
+// });
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

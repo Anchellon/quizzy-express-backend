@@ -1,25 +1,33 @@
 const Quiz = require("../models/Quiz");
-const Quiz = require("../models/Question");
+const Question = require("../models/Question");
 const { body, validationResult } = require("express-validator");
 const Option = require("../models/Option");
-const Question = require("../models/Question");
-
-exports.index = (req, res) => {
+const async = require("async");
+/** get a list of all quizes by a particular user  */
+exports.index = (req, res, next) => {
   // get a list of all quizes by a particular user
   resObj = {};
-
-  Quiz.find({}).exec((err, quizArray) => {
-    if (err) {
-      return next(err);
-    }
-    resObj.quizzes = quizArray;
-    resObj.message = "Quiz List for the user";
-    res.status(200).send(resObj);
-  });
+  Quiz.find({})
+    .then((quizArray) => {
+      if (quizArray) {
+        resObj.quizzes = quizArray;
+      }
+      resObj.message = "Quiz List for the user";
+      res.status(200).send(resObj);
+    })
+    .catch((error) => {
+      //When there are errors We handle them here
+      console.log(err);
+      res.send(400, "Bad Request");
+    });
 };
-// Done testing required
+/**
+ * Creating an empty quiz
+ * Testing Complete
+ * Working
+ */
 exports.quiz_create_postMethod = [
-  body("name", "Quiz   name required").trim().isLength({ min: 1 }).escape(),
+  body("name", "Quiz name required").trim().isLength({ min: 1 }).escape(),
   // Process request after validation and sanitization.
   (req, res, next) => {
     // Extract the validation errors from a request.
@@ -34,50 +42,67 @@ exports.quiz_create_postMethod = [
       });
       return;
     }
-    Quiz.findOne({ name: req.body.name }).exec((err, found_quiz) => {
-      if (err) {
-        return next(err);
-      }
+    Quiz.findOne({ name: req.body.name })
+      .then((found_quiz) => {
+        console.log(found_quiz);
+        if (found_quiz) {
+          // Quiz exists, redirect to its detail page.
+          console.log("Im found");
+          res.status(403).send({
+            message: "Quiz with the same Name Exists",
+            qid: found_quiz.id,
+          });
+        } else {
+          quiz.save().then((savedDoc) => {
+            resObj = {};
 
-      if (found_quiz) {
-        // Quiz exists, redirect to its detail page.
-        res.status(403).send({
-          message: "Quiz with the same Name Exists",
-          qid: found_quiz.id,
-        });
-      } else {
-        quiz.save((err) => {
-          if (err) {
-            return next(err);
-          }
-          // Quiz saved. Redirect to genre detail page.
-          res.status(200).send({ msg: "Saved Successfully", name: quiz.name });
-        });
-      }
-    });
+            // Quiz saved. Redirect to genre detail page.
+            resObj.msg = "Saved Successfully";
+            resObj.name = savedDoc.name;
+            res.status(200).send(resObj);
+          });
+        }
+      })
+      .catch((error) => {
+        //When there are errors We handle them here
+        console.log(err);
+        res.send(400, "Bad Request");
+      });
   },
 ];
-//  Done and Testing required
+
+/**
+ * Deleting a quiz
+ * Testing Underway
+ */
 exports.quiz_deleteMethod = (req, res, next) => {
+  console.log(req.params);
+  console.log("hi");
   async.parallel(
     {
       quizDelete: () => {
         // get Quiz To be deleted
-        Quiz.findByIdAndDelete(req.params.id).exec();
-      },
-      deleteMeta: () => {
-        Question.find({ quiz: req.params.id }).exec((err, qns) => {
-          if (err) {
-            return next(err);
-          }
-          qns.forEach((qn) => {
-            Option.find({ question: qn.id }).exec((options) => {
-              options.forEach((op) => {
-                Option.findByIdAndDelete(op.id);
-              });
-            });
+        Quiz.findByIdAndDelete(req.params.id).then((val) => {
+          res.status(204).send({
+            msg: "Successfully deleted",
           });
         });
+      },
+      deleteMeta: () => {
+        Question.find({ quiz: req.params.id })
+          .then((qns) => {
+            qns.forEach((qn) => {
+              Option.find({ question: qn.id }).then((options) => {
+                options.forEach((op) => {
+                  Option.findByIdAndDelete(op.id).then(() => {});
+                });
+              });
+            });
+          })
+          .catch((err) => {
+            console.log(err);
+            res.send(400, "Bad Request");
+          });
       },
     },
     function (err, results) {
@@ -95,7 +120,9 @@ exports.quiz_deleteMethod = (req, res, next) => {
     }
   );
 };
-//  Done Testing Required
+/**
+ * Testing required
+ */
 exports.quiz_updateName_putMethod = [
   // Validate and sanitze the name field.
   body("name", "Genre name must contain at least 3 characters")
