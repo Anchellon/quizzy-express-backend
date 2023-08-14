@@ -1,4 +1,5 @@
 const express = require("express");
+let cors = require("cors");
 const app = express();
 const port = 3000;
 const createError = require("http-errors");
@@ -12,7 +13,7 @@ const mongoDB = "mongodb://localhost:27018/quizzy";
 
 main().catch((err) => console.log(err));
 async function main() {
-  await mongoose.connect(mongoDB);
+    await mongoose.connect(mongoDB);
 }
 // Adding routers
 var indexRouter = require("./routes/index");
@@ -20,6 +21,7 @@ var indexRouter = require("./routes/index");
 const catalogRouter = require("./routes/catalog");
 
 // Middlewares
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -34,5 +36,5 @@ app.use("/catalog", catalogRouter);
 // });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+    console.log(`Example app listening on port ${port}`);
 });
