@@ -7,18 +7,11 @@ const path = require("path");
 const cookieParser = require("cookie-parser");
 const logger = require("morgan");
 // Connection to db via mongoose
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
-const mongoDB = "mongodb://localhost:27018/quizzy";
-
-main().catch((err) => console.log(err));
-async function main() {
-    await mongoose.connect(mongoDB);
-}
+const conn = require("./utils/connection");
 // Adding routers
-var indexRouter = require("./routes/index");
+
 // var usersRouter = require("./routes/users");
-const catalogRouter = require("./routes/catalog");
+const api = require("./routes/api");
 
 // Middlewares
 app.use(cors());
@@ -29,7 +22,7 @@ app.use(cookieParser());
 
 // Adding routes
 // app.use("/users", usersRouter);
-app.use("/catalog", catalogRouter);
+app.use("/api", api);
 
 // app.get("/", (req, res) => {
 //   res.send("Hello World!");

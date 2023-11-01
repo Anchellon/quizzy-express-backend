@@ -59,6 +59,7 @@ exports.quiz_create_postMethod = [
                         // Quiz saved. Redirect to genre detail page.
                         resObj.msg = "Saved Successfully";
                         resObj.name = savedDoc.name;
+                        resObj.id = savedDoc._id;
                         res.status(200).send(resObj);
                     });
                 }
@@ -172,28 +173,40 @@ exports.quiz_updateName_putMethod = [
 
 exports.quiz_Info_getMethod = (req, res) => {
     let resObj = {};
-    Quiz.findById(req.params.id).exec((err, quiz) => {
-        if (err) {
-            return next(err);
-        }
-        // For the quiz find all relevant details including all questions and their corresponding
-        resObj.quiz = quiz;
-        Question.find({ quiz: req.params.id }).exec((err, qns) => {
-            if (err) {
-                return next(err);
-            }
-            qns = [];
-            qns.forEach((qn) => {
-                qnObj = {};
-                qnObj.qn = qn;
-                qnObj.options = [];
-                Option.find({ question: qn.id }).exec((options) => {
-                    qnObj.options.apply(options);
+    Quiz.findById(req.params.id)
+        .then((quiz) => {
+            // For the quiz find all relevant details including all questions and their corresponding
+            resObj.quiz = quiz;
+            Question.find({ quiz: req.params.id })
+                .then((qns) => {
+                    qns = [];
+                    qns.forEach((qn) => {
+                        qnObj = {};
+                        qnObj.qn = qn;
+                        qnObj.options = [];
+                        Option.find({ question: qn.id })
+                            .then((options) => {
+                                qnObj.options.apply(options);
+                            })
+                            .catch((error) => {
+                                //When there are errors We handle them here
+                                console.log(err);
+                                res.send(400, "Bad Request");
+                            });
+                        qns.push(qnObj);
+                    });
+                    resObj.message = "Quiz Info Retrieved";
+                    res.status(200).send(resObj);
+                })
+                .catch((error) => {
+                    //When there are errors We handle them here
+                    console.log(err);
+                    res.send(400, "Bad Request");
                 });
-                qns.push(qnObj);
-            });
-            resObj.message = "Quiz Info Retrieved";
-            res.status(200).send(resObj);
+        })
+        .catch((error) => {
+            //When there are errors We handle them here
+            console.log(error);
+            res.send(400, "Bad Request");
         });
-    });
 };
