@@ -6,7 +6,7 @@ const quiz_controller = require("../controllers/quizController");
 const question_controller = require("../controllers/questionController");
 
 /* GET catalog home page. to display all quizes */
-router.get("/", quiz_controller.index);
+router.get("/quiz/", quiz_controller.index);
 // router.post("/test", question_controller.quesstion_testMethod);
 
 // POST to Create an empty quiz with quiz name
@@ -28,7 +28,7 @@ router.delete(
 );
 
 // GET Question details along with all options associcated with it
-router.get("question/:id", question_controller.question_info_getMethod);
+router.get("/quiz/:id/questions", question_controller.question_info_getMethod);
 
 // POST Question details along with all options associcated with it
 router.post(

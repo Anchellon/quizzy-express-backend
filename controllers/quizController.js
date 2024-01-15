@@ -1,8 +1,7 @@
 const Quiz = require("../models/Quiz");
 const Question = require("../models/Question");
 const { body, validationResult } = require("express-validator");
-const Option = require("../models/Option");
-const async = require("async");
+
 /** get a list of all quizes by a particular user  */
 exports.index = (req, res, next) => {
     // get a list of all quizes by a particular user
@@ -26,6 +25,7 @@ exports.index = (req, res, next) => {
  * Testing Complete
  * Working
  */
+
 exports.quiz_create_postMethod = [
     body("quizName", "Quiz name required").trim().isLength({ min: 1 }).escape(),
     // Process request after validation and sanitization.
@@ -79,49 +79,18 @@ exports.quiz_create_postMethod = [
 exports.quiz_deleteMethod = (req, res, next) => {
     console.log(req.params);
     console.log("hi");
-    async.parallel(
-        {
-            quizDelete: () => {
-                // get Quiz To be deleted
-                Quiz.findByIdAndDelete(req.params.id).then((val) => {
-                    res.status(204).send({
-                        msg: "Successfully deleted",
-                    });
-                });
-            },
-            deleteMeta: () => {
-                Question.find({ quiz: req.params.id })
-                    .then((qns) => {
-                        qns.forEach((qn) => {
-                            Option.find({ question: qn.id }).then((options) => {
-                                options.forEach((op) => {
-                                    Option.findByIdAndDelete(op.id).then(
-                                        () => {}
-                                    );
-                                });
-                            });
-                        });
-                    })
-                    .catch((err) => {
-                        console.log(err);
-                        res.send(400, "Bad Request");
-                    });
-            },
-        },
-        function (err, results) {
-            if (err) {
-                return next(err);
-            }
-            if (results.quiz == null) {
-                // No results.
-                res.redirect("/catalog/quiz");
-            }
-            // Successful Delete
-            res.status(200).send({
+    Quiz.findOne({ _id: req.params.id })
+        .then(async (val) => {
+            let id = await val.deleteOne();
+            // console.log(id);
+            res.status(204).send({
                 msg: "Successfully deleted",
             });
-        }
-    );
+        })
+        .catch((err) => {
+            console.log(`caught the error: ${err}`);
+            return res.status(500).json(err);
+        });
 };
 /**
  * Testing required
@@ -134,7 +103,7 @@ exports.quiz_updateName_putMethod = [
         .escape(),
 
     // Process request after validation and sanitization.
-    (req, res, next) => {
+    async (req, res, next) => {
         // Extract the validation errors from a request .
         const errors = validationResult(req);
 
@@ -153,7 +122,7 @@ exports.quiz_updateName_putMethod = [
             return;
         } else {
             // Update the record.
-            Quiz.findByIdAndUpdate(
+            await Quiz.findByIdAndUpdate(
                 req.params.id,
                 quiz,
                 {},
@@ -179,23 +148,7 @@ exports.quiz_Info_getMethod = (req, res) => {
             resObj.quiz = quiz;
             Question.find({ quiz: req.params.id })
                 .then((qns) => {
-                    qns = [];
-                    qns.forEach((qn) => {
-                        qnObj = {};
-                        qnObj.qn = qn;
-                        qnObj.options = [];
-                        Option.find({ question: qn.id })
-                            .then((options) => {
-                                qnObj.options.apply(options);
-                            })
-                            .catch((error) => {
-                                //When there are errors We handle them here
-                                console.log(err);
-                                res.send(400, "Bad Request");
-                            });
-                        qns.push(qnObj);
-                    });
-                    resObj.message = "Quiz Info Retrieved";
+                    resObj.questions = qns;
                     res.status(200).send(resObj);
                 })
                 .catch((error) => {
